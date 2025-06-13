@@ -14,9 +14,14 @@ COPY dockerfiles/install-package.sh install-package.sh
 RUN chmod +x install-package.sh
 RUN ./install-package.sh $extras
 
+# Add entrypoint script to fix permissions
+COPY dockerfiles/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 SHELL ["/bin/bash", "-c"]
 
 USER coder
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD [ "/bin/bash" ]
 
