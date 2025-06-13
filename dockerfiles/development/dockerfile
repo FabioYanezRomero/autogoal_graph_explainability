@@ -10,17 +10,47 @@ ARG extras
 
 RUN if [ -f /home/coder/autogoal/autogoal-remote/readme.md ]; then mv /home/coder/autogoal/autogoal-remote/readme.md /home/coder/autogoal/autogoal-remote/README.md; fi
 
-COPY dockerfiles/install-package.sh install-package.sh 
+COPY autogoal_repo/dockerfiles/install-package.sh install-package.sh 
 RUN chmod +x install-package.sh
 RUN ./install-package.sh $extras
 
 # Add entrypoint script to fix permissions
-COPY dockerfiles/entrypoint.sh /entrypoint.sh
+COPY autogoal_repo/dockerfiles/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# --- Install required dependencies for main.py (excluding autogoal) ---
+# System dependencies for PyTorch Geometric and ML
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip python3-dev build-essential git curl wget \
+    libopenmpi-dev libomp-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install PyTorch (CUDA 11.6, Python 3.9)
+RUN pip install --no-cache-dir torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
+
+# Install torch-geometric and dependencies
+RUN pip install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-1.13.0+cu116.html && \
+    pip install --no-cache-dir torch-geometric
+
+# Install dig.xgraph
+RUN pip install --no-cache-dir dig[xgraph]
+
+# Install project Python dependencies (excluding autogoal)
+COPY requirements.txt /tmp/requirements.txt
+RUN grep -v autogoal /tmp/requirements.txt > /tmp/requirements-autogoal-extras.txt && \
+    pip install --no-cache-dir -r /tmp/requirements-autogoal-extras.txt && \
+    rm /tmp/requirements.txt /tmp/requirements-autogoal-extras.txt
 
 SHELL ["/bin/bash", "-c"]
 
-USER coder
+# Create devgroup and devuser with UID/GID 1000 for Windsurf IDE compatibility
+RUN if ! getent group 1000 >/dev/null; then groupadd -g 1000 devgroup; fi \
+ && if ! getent passwd 1000 >/dev/null; then useradd -m -u 1000 -g 1000 devuser; fi
+
+# Start as root for robust attach and permission fix
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+
+USER root
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [ "/bin/bash" ]
