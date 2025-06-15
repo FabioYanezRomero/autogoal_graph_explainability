@@ -45,19 +45,25 @@ RUN adduser --gecos '' --disabled-password coder \
 # Project-specific installation instruction
 # ------------------------------------------
 
-COPY bash.bashrc /etc
+COPY autogoal_repo/bash.bashrc /etc
 RUN sed -i 's/\r$//' /etc/bash.bashrc && chmod +x /etc/bash.bashrc
 
 ENV BUILD_ENVIRONMENT="development"
 ENV XDG_CACHE_HOME="/opt/dev/cache"
+ENV PYTHONPATH="/app/src"
 WORKDIR /home/coder/autogoal
 
 # Make RUN commands use the autogoal environment
-COPY makefile /home/coder/autogoal/
+COPY autogoal_repo/makefile /home/coder/autogoal/
 
 # Setup poetry configuration
 RUN pip install -U pip setuptools
 RUN pip install poetry==1.8.4
+
+# (Removed explicit PyTorch, torch-geometric, dig.xgraph, and system deps install)
+# You will install these later from inside the container using last_requirements.txt or similar.
+
+# Install project Python dependencies (excluding autogoal)
 RUN poetry config virtualenvs.create false
 
 SHELL ["/bin/bash", "-c"]
@@ -68,19 +74,19 @@ RUN chown -R coder /home/coder
 RUN chown -R coder /opt/dev/cache
 
 # Copy code-base for autogoal-core
-COPY autogoal/ /home/coder/autogoal/autogoal
+COPY autogoal_repo/autogoal/ /home/coder/autogoal/autogoal
 
 # Copy code-base for autogoal-contrib
-COPY autogoal-contrib/ /home/coder/autogoal/autogoal-contrib
+COPY autogoal_repo/autogoal-contrib/ /home/coder/autogoal/autogoal-contrib
 
 # Copy code-base for autogoal-remote
-COPY autogoal-remote/ /home/coder/autogoal/autogoal-remote
+COPY autogoal_repo/autogoal-remote/ /home/coder/autogoal/autogoal-remote
 
 # Copy code-base for autogoal-remote
-COPY scripts/ /home/coder/autogoal/scripts
+COPY autogoal_repo/scripts/ /home/coder/autogoal/scripts
 
 # Install autogoal core
-COPY dockerfiles/install-package.sh /home/coder/autogoal/install-package.sh 
+COPY autogoal_repo/dockerfiles/install-package.sh /home/coder/autogoal/install-package.sh 
 
 # Fix line endings
 RUN find /home/coder/autogoal -type f \

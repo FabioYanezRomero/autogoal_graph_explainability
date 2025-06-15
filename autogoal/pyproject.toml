@@ -20,6 +20,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.9.13,<3.11"
+torch = "==1.13.1"
 pytest = "^7.2.1"
 numpy = "1.26.4"
 psutil = "^5.9.4"

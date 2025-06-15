@@ -1,0 +1,23 @@
+# Last-stage requirements for PyTorch, torch-geometric, and related packages
+# Install using: pip install --no-cache-dir -r last_requirements.txt
+
+# CUDA 11.6 wheels for PyTorch 1.13.1
+# (Adjust versions if you want to use a different CUDA or PyTorch version)
+torch==1.13.1+cu116
+torchvision==0.14.1+cu116
+torchaudio==0.13.1+cu116
+# Use the official PyTorch index for CUDA wheels
+--extra-index-url https://download.pytorch.org/whl/cu116
+
+# Torch Geometric dependencies (for torch==1.13.1 + cu116)
+torch-scatter==2.1.1
+torch-sparse==0.6.17
+torch-cluster==1.6.1
+torch-spline-conv==1.2.1
+torch-geometric==2.3.1
+-f https://data.pyg.org/whl/torch-1.13.0+cu116.html
+
+# DIG XGraph (for graph explainability)
+dig[xgraph]
+
+# (Add any other last-stage dependencies here)
